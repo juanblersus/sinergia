@@ -38,29 +38,29 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
-        // --- DATOS INICIALES (ESTADO DEL SISTEMA) ---
+        // --- DATOS INICIALES CON FASES ASIGNADAS (ESTADO DEL SISTEMA) ---
         const adminColumns = [
-          { id: 'col-a1', title: 'Inbox Comercial', role: 'Asistente', color: 'from-slate-100/80 to-slate-50/80', headerColor: 'bg-slate-700 text-white' },
-          { id: 'col-a2', title: 'Gestión y Pautas', role: 'Asistente', color: 'from-blue-100/80 to-blue-50/80', headerColor: 'bg-blue-600 text-white' },
-          { id: 'col-a3', title: 'Facturación / Cierre', role: 'Asistente', color: 'from-indigo-100/80 to-indigo-50/80', headerColor: 'bg-indigo-600 text-white' },
+          { id: 'col-a1', title: 'Inbox Comercial', role: 'Asistente', phase: 'Administrativo', color: 'from-slate-100/80 to-slate-50/80', headerColor: 'bg-slate-700 text-white' },
+          { id: 'col-a2', title: 'Gestión y Pautas', role: 'Asistente', phase: 'Administrativo', color: 'from-blue-100/80 to-blue-50/80', headerColor: 'bg-blue-600 text-white' },
+          { id: 'col-a3', title: 'Facturación / Cierre', role: 'Asistente', phase: 'Administrativo', color: 'from-indigo-100/80 to-indigo-50/80', headerColor: 'bg-indigo-600 text-white' },
         ];
 
         const creativeColumns = [
-          { id: 'col-c1', title: 'Ideas / Backlog', role: 'Todos', color: 'from-amber-100/60 to-orange-50/60', headerColor: 'bg-amber-500 text-white' },
-          { id: 'col-c2', title: 'Preproducción', role: 'Influencer', color: 'from-purple-100/60 to-purple-50/60', headerColor: 'bg-purple-600 text-white' },
-          { id: 'col-c3', title: 'Postproducción', role: 'Editor', color: 'from-pink-100/60 to-pink-50/60', headerColor: 'bg-pink-500 text-white' },
-          { id: 'col-c4', title: 'Distribución', role: 'Community Manager', color: 'from-rose-100/60 to-rose-50/60', headerColor: 'bg-rose-500 text-white' },
-          { id: 'col-c5', title: 'Publicado', role: 'CM / Asistente', color: 'from-emerald-100/60 to-emerald-50/60', headerColor: 'bg-emerald-500 text-white' },
+          { id: 'col-c1', title: 'Ideas / Backlog', role: 'Todos', phase: 'Idea', color: 'from-amber-100/60 to-orange-50/60', headerColor: 'bg-amber-500 text-white' },
+          { id: 'col-c2', title: 'Preproducción', role: 'Influencer', phase: 'Preproducción', color: 'from-purple-100/60 to-purple-50/60', headerColor: 'bg-purple-600 text-white' },
+          { id: 'col-c3', title: 'Postproducción', role: 'Editor', phase: 'Postproducción', color: 'from-pink-100/60 to-pink-50/60', headerColor: 'bg-pink-500 text-white' },
+          { id: 'col-c4', title: 'Distribución', role: 'Community Manager', phase: 'Distribución', color: 'from-rose-100/60 to-rose-50/60', headerColor: 'bg-rose-500 text-white' },
+          { id: 'col-c5', title: 'Publicado', role: 'CM / Asistente', phase: 'Publicado', color: 'from-emerald-100/60 to-emerald-50/60', headerColor: 'bg-emerald-500 text-white' },
         ];
 
         const initialTasks = [
-          { id: 't1', title: 'Propuesta Marca Skincare', columnId: 'col-a1', assignee: 'Asistente', tag: 'Patrocinado', priority: 'Alta', date: '2026-02-14' },
-          { id: 't2', title: 'Contrato Ropa Deportiva', columnId: 'col-a2', assignee: 'Asistente', tag: 'Administrativo', priority: 'Alta', date: '2026-02-18' },
-          { id: 't3', title: 'Cobro Campaña Enero', columnId: 'col-a3', assignee: 'Asistente', tag: 'Administrativo', priority: 'Media', date: '2026-02-28' },
-          { id: 't4', title: 'Trend de TikTok (Audio Viral)', columnId: 'col-c1', assignee: 'Todos', tag: 'Orgánico', priority: 'Baja', date: '2026-02-10' },
-          { id: 't5', title: 'Rutina de Mañana VLOG', columnId: 'col-c2', assignee: 'Influencer', tag: 'YouTube', priority: 'Media', date: '2026-02-20' },
-          { id: 't6', title: 'Reels Q&A Nutrición', columnId: 'col-c3', assignee: 'Editor', tag: 'Edición', priority: 'Alta', date: '2026-02-25' },
-          { id: 't7', title: 'Post Carrusel Tips Bienestar', columnId: 'col-c4', assignee: 'Community Manager', tag: 'Instagram', priority: 'Media', date: '2026-03-12' },
+          { id: 't1', title: 'Propuesta Marca Skincare', columnId: 'col-a1', assignee: 'Asistente', platform: 'Multiplataforma', phase: 'Administrativo', priority: 'Alta', date: '2026-02-14' },
+          { id: 't2', title: 'Contrato Ropa Deportiva', columnId: 'col-a2', assignee: 'Asistente', platform: 'Multiplataforma', phase: 'Administrativo', priority: 'Alta', date: '2026-02-18' },
+          { id: 't3', title: 'Cobro Campaña Enero', columnId: 'col-a3', assignee: 'Asistente', platform: 'Interno', phase: 'Administrativo', priority: 'Media', date: '2026-02-28' },
+          { id: 't4', title: 'Trend de TikTok (Audio Viral)', columnId: 'col-c1', assignee: 'Todos', platform: 'TikTok', phase: 'Idea', priority: 'Baja', date: '2026-02-10' },
+          { id: 't5', title: 'Rutina de Mañana VLOG', columnId: 'col-c2', assignee: 'Influencer', platform: 'YouTube', phase: 'Preproducción', priority: 'Media', date: '2026-02-20' },
+          { id: 't6', title: 'Reels Q&A Nutrición', columnId: 'col-c3', assignee: 'Editor', platform: 'Instagram', phase: 'Postproducción', priority: 'Alta', date: '2026-02-25' },
+          { id: 't7', title: 'Post Carrusel Tips Bienestar', columnId: 'col-c4', assignee: 'Community Manager', platform: 'Instagram', phase: 'Distribución', priority: 'Media', date: '2026-03-12' },
         ];
 
         const calendarMonths = [
@@ -74,10 +74,10 @@
           const [view, setView] = useState('kanban'); 
           const [systemStatus, setSystemStatus] = useState({ state: 'Equilibrio', message: 'El sistema fluye correctamente.', color: 'from-emerald-400 to-teal-500 text-white shadow-emerald-200', icon: 'fa-circle-check' });
           const [isModalOpen, setIsModalOpen] = useState(false);
-          const [editingTask, setEditingTask] = useState(null); // Estado para la tarjeta en edición
+          const [editingTask, setEditingTask] = useState(null);
           
           const [newTask, setNewTask] = useState({ 
-            title: '', assignee: 'Influencer', tag: 'Orgánico', date: '2026-02-15', subsystem: 'creativo'
+            title: '', assignee: 'Influencer', platform: 'Instagram', date: '2026-02-15', subsystem: 'creativo'
           });
 
           // --- MECANISMO DE REGULACIÓN ---
@@ -115,14 +115,13 @@
             e.preventDefault();
             const taskId = e.dataTransfer.getData('taskId');
             
-            // Buscar la columna destino para obtener su rol por defecto
             const allColumns = [...adminColumns, ...creativeColumns];
             const targetColumn = allColumns.find(c => c.id === columnId);
 
             setTasks(prevTasks => prevTasks.map(task => {
               if (task.id === taskId) {
-                // Actualiza la columna y auto-asigna al responsable de esa fase
-                return { ...task, columnId: columnId, assignee: targetColumn.role };
+                // AQUÍ OCURRE LA MAGIA: Al mover, cambia la columna, el rol responsable y la fase(etiqueta 2)
+                return { ...task, columnId: columnId, assignee: targetColumn.role, phase: targetColumn.phase };
               }
               return task;
             }));
@@ -133,32 +132,53 @@
             e.preventDefault();
             if (!newTask.title.trim()) return;
             const initialColumn = newTask.subsystem === 'administrativo' ? 'col-a1' : 'col-c1';
+            const targetColumn = [...adminColumns, ...creativeColumns].find(c => c.id === initialColumn);
+            
             const task = {
-              id: `t${Date.now()}`, title: newTask.title, columnId: initialColumn, assignee: newTask.assignee,
-              tag: newTask.tag, priority: 'Media', date: newTask.date
+              id: `t${Date.now()}`, 
+              title: newTask.title, 
+              columnId: initialColumn, 
+              assignee: newTask.assignee,
+              platform: newTask.platform, 
+              phase: targetColumn.phase, // Hereda la fase inicial automáticamente
+              priority: 'Media', 
+              date: newTask.date
             };
             setTasks([...tasks, task]);
             setIsModalOpen(false);
-            setNewTask({ title: '', assignee: 'Influencer', tag: 'Orgánico', date: '2026-02-15', subsystem: 'creativo' });
+            setNewTask({ title: '', assignee: 'Influencer', platform: 'Instagram', date: '2026-02-15', subsystem: 'creativo' });
           };
 
           // --- ACTUALIZAR TAREA EXISTENTE (EDICIÓN) ---
           const handleUpdateTask = (e) => {
             e.preventDefault();
             setTasks(prevTasks => prevTasks.map(t => t.id === editingTask.id ? editingTask : t));
-            setEditingTask(null); // Cerrar modal de edición
+            setEditingTask(null); 
           };
 
-          const getTagStyle = (tag) => {
+          // --- ESTILOS DE ETIQUETAS (DOS CATEGORÍAS INDEPENDIENTES) ---
+          const getPlatformStyle = (platform) => {
             const styles = {
-              'Patrocinado': 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white shadow-md',
-              'YouTube': 'bg-gradient-to-r from-red-500 to-rose-500 text-white shadow-md',
-              'Instagram': 'bg-gradient-to-r from-pink-500 to-orange-400 text-white shadow-md',
-              'Edición': 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-md',
-              'Orgánico': 'bg-gradient-to-r from-emerald-400 to-teal-500 text-white shadow-md',
-              'Administrativo': 'bg-gradient-to-r from-slate-600 to-slate-800 text-white shadow-md'
+              'YouTube': 'bg-gradient-to-r from-red-600 to-rose-600 text-white shadow-sm',
+              'Instagram': 'bg-gradient-to-r from-pink-600 to-orange-500 text-white shadow-sm',
+              'TikTok': 'bg-gradient-to-r from-slate-800 to-black text-white shadow-sm',
+              'Multiplataforma': 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-sm',
+              'Sitio Web': 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-sm',
+              'Interno': 'bg-slate-200 text-slate-700 border border-slate-300'
             };
-            return styles[tag] || 'bg-slate-200 text-slate-700';
+            return styles[platform] || 'bg-slate-200 text-slate-700';
+          };
+
+          const getPhaseStyle = (phase) => {
+            const styles = {
+              'Administrativo': 'bg-blue-100 text-blue-800 border border-blue-200',
+              'Idea': 'bg-amber-100 text-amber-800 border border-amber-200',
+              'Preproducción': 'bg-purple-100 text-purple-800 border border-purple-200',
+              'Postproducción': 'bg-pink-100 text-pink-800 border border-pink-200',
+              'Distribución': 'bg-rose-100 text-rose-800 border border-rose-200',
+              'Publicado': 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+            };
+            return styles[phase] || 'bg-slate-100 text-slate-800 border border-slate-200';
           };
 
           const renderSwimlane = (title, iconClass, columns) => (
@@ -188,15 +208,20 @@
                     <div className="p-3 flex-1 overflow-y-auto flex flex-col gap-3 min-h-[150px]">
                       {tasks.filter(t => t.columnId === column.id).map(task => (
                         <div key={task.id} draggable onDragStart={(e) => handleDragStart(e, task.id)} onDragEnd={handleDragEnd} className="bg-white/90 backdrop-blur-sm p-4 rounded-xl shadow-sm hover:shadow-xl border border-white cursor-grab active:cursor-grabbing hover:-translate-y-1 transition-all duration-300 group relative">
-                          <div className="flex justify-between items-start mb-3">
-                            <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full ${getTagStyle(task.tag)}`}>
-                              {task.tag}
+                          
+                          {/* SECCIÓN DE ETIQUETAS INDEPENDIENTES */}
+                          <div className="flex flex-wrap gap-1.5 items-start mb-3 pr-6">
+                            <span className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-full ${getPlatformStyle(task.platform)}`}>
+                              {task.platform}
                             </span>
-                            {/* Botón de Edición modificado */}
-                            <button onClick={() => setEditingTask(task)} className="text-slate-400 hover:text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity bg-white/80 rounded-full p-1 shadow-sm border border-slate-100">
-                              <i className="fa-solid fa-pen text-xs px-1"></i>
-                            </button>
+                            <span className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-full ${getPhaseStyle(task.phase)}`}>
+                              <i className="fa-solid fa-layer-group mr-1 opacity-70"></i>{task.phase}
+                            </span>
                           </div>
+
+                          <button onClick={() => setEditingTask(task)} className="absolute top-4 right-4 text-slate-400 hover:text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity bg-white/80 rounded-full p-1.5 shadow-sm border border-slate-100">
+                            <i className="fa-solid fa-pen text-xs"></i>
+                          </button>
                           
                           <h3 className="text-sm font-bold text-slate-800 leading-snug mb-3">{task.title}</h3>
                           
@@ -429,7 +454,7 @@
                       
                       <div className="flex flex-col sm:flex-row gap-4">
                         <div className="flex-1">
-                          <label className="block text-sm font-bold text-slate-700 mb-1.5">Subsistema de Ingreso</label>
+                          <label className="block text-sm font-bold text-slate-700 mb-1.5">Subsistema Inicial</label>
                           <select value={newTask.subsystem} onChange={(e) => setNewTask({...newTask, subsystem: e.target.value})} className="w-full border-2 border-slate-200 rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 text-sm focus:ring-0 focus:border-indigo-500 outline-none bg-slate-50 focus:bg-white font-medium">
                             <option value="creativo">🎨 Flujo Creativo (Ideas)</option>
                             <option value="administrativo">💼 Flujo Admin (Comercial)</option>
@@ -449,14 +474,14 @@
 
                       <div className="flex flex-col sm:flex-row gap-4">
                         <div className="flex-1">
-                          <label className="block text-sm font-bold text-slate-700 mb-1.5">Categoría (Tag)</label>
-                          <select value={newTask.tag} onChange={(e) => setNewTask({...newTask, tag: e.target.value})} className="w-full border-2 border-slate-200 rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 text-sm focus:ring-0 focus:border-indigo-500 outline-none bg-slate-50 focus:bg-white font-medium">
-                            <option>Orgánico</option>
-                            <option>Patrocinado</option>
+                          <label className="block text-sm font-bold text-slate-700 mb-1.5">Plataforma / Red Social</label>
+                          <select value={newTask.platform} onChange={(e) => setNewTask({...newTask, platform: e.target.value})} className="w-full border-2 border-slate-200 rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 text-sm focus:ring-0 focus:border-indigo-500 outline-none bg-slate-50 focus:bg-white font-medium">
                             <option>YouTube</option>
                             <option>Instagram</option>
-                            <option>Edición</option>
-                            <option>Administrativo</option>
+                            <option>TikTok</option>
+                            <option>Multiplataforma</option>
+                            <option>Sitio Web</option>
+                            <option>Interno</option>
                           </select>
                         </div>
                         <div className="flex-1">
@@ -505,14 +530,14 @@
                           </select>
                         </div>
                         <div className="flex-1">
-                          <label className="block text-sm font-bold text-slate-700 mb-1.5">Categoría (Tag)</label>
-                          <select value={editingTask.tag} onChange={(e) => setEditingTask({...editingTask, tag: e.target.value})} className="w-full border-2 border-slate-200 rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 text-sm focus:ring-0 focus:border-amber-500 outline-none bg-slate-50 focus:bg-white font-medium">
-                            <option>Orgánico</option>
-                            <option>Patrocinado</option>
+                          <label className="block text-sm font-bold text-slate-700 mb-1.5">Plataforma / Red Social</label>
+                          <select value={editingTask.platform} onChange={(e) => setEditingTask({...editingTask, platform: e.target.value})} className="w-full border-2 border-slate-200 rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 text-sm focus:ring-0 focus:border-amber-500 outline-none bg-slate-50 focus:bg-white font-medium">
                             <option>YouTube</option>
                             <option>Instagram</option>
-                            <option>Edición</option>
-                            <option>Administrativo</option>
+                            <option>TikTok</option>
+                            <option>Multiplataforma</option>
+                            <option>Sitio Web</option>
+                            <option>Interno</option>
                           </select>
                         </div>
                       </div>
