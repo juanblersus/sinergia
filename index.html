@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plataforma Sinergia</title>
+    
+    <!-- Tailwind CSS para los estilos -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome para los íconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- React, ReactDOM y Babel (Traductores) para que funcione en un archivo HTML -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        /* Animaciones personalizadas */
+        @keyframes fade-in {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fade-in 0.5s ease-out forwards;
+        }
+        /* Estilizar barra de desplazamiento */
+        ::-webkit-scrollbar { height: 8px; width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // --- DATOS INICIALES (ESTADO DEL SISTEMA) ---
+        const adminColumns = [
+          { id: 'col-a1', title: 'Inbox Comercial', role: 'Asistente', color: 'from-slate-100/80 to-slate-50/80', headerColor: 'bg-slate-700 text-white' },
+          { id: 'col-a2', title: 'Gestión y Pautas', role: 'Asistente', color: 'from-blue-100/80 to-blue-50/80', headerColor: 'bg-blue-600 text-white' },
+          { id: 'col-a3', title: 'Facturación / Cierre', role: 'Asistente', color: 'from-indigo-100/80 to-indigo-50/80', headerColor: 'bg-indigo-600 text-white' },
+        ];
+
+        const creativeColumns = [
+          { id: 'col-c1', title: 'Ideas / Backlog', role: 'Todos', color: 'from-amber-100/60 to-orange-50/60', headerColor: 'bg-amber-500 text-white' },
+          { id: 'col-c2', title: 'Preproducción', role: 'Influencer', color: 'from-purple-100/60 to-purple-50/60', headerColor: 'bg-purple-600 text-white' },
+          { id: 'col-c3', title: 'Postproducción', role: 'Editor', color: 'from-pink-100/60 to-pink-50/60', headerColor: 'bg-pink-500 text-white' },
+          { id: 'col-c4', title: 'Distribución', role: 'Community Manager', color: 'from-rose-100/60 to-rose-50/60', headerColor: 'bg-rose-500 text-white' },
+          { id: 'col-c5', title: 'Publicado', role: 'CM / Asistente', color: 'from-emerald-100/60 to-emerald-50/60', headerColor: 'bg-emerald-500 text-white' },
+        ];
+
+        const initialTasks = [
+          { id: 't1', title: 'Propuesta Marca Skincare', columnId: 'col-a1', assignee: 'Asistente Admin', tag: 'Patrocinado', priority: 'Alta', date: '2026-02-14' },
+          { id: 't2', title: 'Contrato Ropa Deportiva', columnId: 'col-a2', assignee: 'Asistente Admin', tag: 'Administrativo', priority: 'Alta', date: '2026-02-18' },
+          { id: 't3', title: 'Cobro Campaña Enero', columnId: 'col-a3', assignee: 'Asistente Admin', tag: 'Administrativo', priority: 'Media', date: '2026-02-28' },
+          { id: 't4', title: 'Trend de TikTok (Audio Viral)', columnId: 'col-c1', assignee: 'Todos', tag: 'Orgánico', priority: 'Baja', date: '2026-02-10' },
+          { id: 't5', title: 'Rutina de Mañana VLOG', columnId: 'col-c2', assignee: 'Influencer', tag: 'YouTube', priority: 'Media', date: '2026-02-20' },
+          { id: 't6', title: 'Reels Q&A Nutrición', columnId: 'col-c3', assignee: 'Editor de Video', tag: 'Edición', priority: 'Alta', date: '2026-02-25' },
+          { id: 't7', title: 'Post Carrusel Tips Bienestar', columnId: 'col-c4', assignee: 'Community Manager', tag: 'Instagram', priority: 'Media', date: '2026-03-12' },
+        ];
+
+        const calendarMonths = [
+          { name: 'Febrero 2026', month: '02', days: 28, startDayIndex: 0 }, 
+          { name: 'Marzo 2026', month: '03', days: 31, startDayIndex: 0 },   
+        ];
+        const daysOfWeek = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+
+        function App() {
+          const [tasks, setTasks] = useState(initialTasks);
+          const [view, setView] = useState('kanban'); 
+          const [systemStatus, setSystemStatus] = useState({ state: 'Equilibrio', message: 'El sistema fluye correctamente.', color: 'from-emerald-400 to-teal-500 text-white shadow-emerald-200', icon: 'fa-circle-check' });
+          const [isModalOpen, setIsModalOpen] = useState(false);
+          
+          const [newTask, setNewTask] = useState({ 
+            title: '', assignee: 'Influencer', tag: 'Orgánico', date: '2026-02-15', subsystem: 'creativo'
+          });
+
+          // --- MECANISMO DE REGULACIÓN ---
+          useEffect(() => {
+            const allColumns = [...adminColumns, ...creativeColumns];
+            const taskCounts = allColumns.reduce((acc, col) => {
+              acc[col.id] = tasks.filter(t => t.columnId === col.id).length;
+              return acc;
+            }, {});
+
+            if (taskCounts['col-c3'] >= 3) {
+              setSystemStatus({ state: 'Entropía Alta (Creativa)', message: '⚠️ Cuello de botella. El Editor de Video está sobrecargado.', color: 'from-red-500 to-rose-600 text-white shadow-red-200', icon: 'fa-triangle-exclamation' });
+            } else if (taskCounts['col-a2'] >= 3) {
+              setSystemStatus({ state: 'Entropía Administrativa', message: '⚠️ Riesgo comercial. Demasiados contratos estancados en gestión.', color: 'from-orange-500 to-red-500 text-white shadow-orange-200', icon: 'fa-triangle-exclamation' });
+            } else if (taskCounts['col-c2'] >= 3) {
+              setSystemStatus({ state: 'Entropía Media', message: '⚠️ Riesgo en Preproducción. Demasiadas grabaciones pendientes.', color: 'from-orange-400 to-amber-500 text-white shadow-orange-200', icon: 'fa-triangle-exclamation' });
+            } else {
+              setSystemStatus({ state: 'Equilibrio Dinámico', message: '✅ Sinergia óptima. Ambos subsistemas fluyen correctamente.', color: 'from-emerald-400 to-teal-500 text-white shadow-emerald-200', icon: 'fa-circle-check' });
+            }
+          }, [tasks]);
+
+          // --- DRAG AND DROP ---
+          const handleDragStart = (e, taskId) => {
+            e.dataTransfer.setData('taskId', taskId);
+            e.currentTarget.classList.add('opacity-40', 'scale-95');
+          };
+
+          const handleDragEnd = (e) => {
+            e.currentTarget.classList.remove('opacity-40', 'scale-95');
+          };
+
+          const handleDragOver = (e) => e.preventDefault();
+
+          const handleDrop = (e, columnId) => {
+            e.preventDefault();
+            const taskId = e.dataTransfer.getData('taskId');
+            setTasks(prevTasks => prevTasks.map(task => task.id === taskId ? { ...task, columnId } : task));
+          };
+
+          // --- CREAR NUEVA TAREA ---
+          const handleAddTask = (e) => {
+            e.preventDefault();
+            if (!newTask.title.trim()) return;
+            const initialColumn = newTask.subsystem === 'administrativo' ? 'col-a1' : 'col-c1';
+            const task = {
+              id: `t${Date.now()}`, title: newTask.title, columnId: initialColumn, assignee: newTask.assignee,
+              tag: newTask.tag, priority: 'Media', date: newTask.date
+            };
+            setTasks([...tasks, task]);
+            setIsModalOpen(false);
+            setNewTask({ title: '', assignee: 'Influencer', tag: 'Orgánico', date: '2026-02-15', subsystem: 'creativo' });
+          };
+
+          const getTagStyle = (tag) => {
+            const styles = {
+              'Patrocinado': 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white shadow-md',
+              'YouTube': 'bg-gradient-to-r from-red-500 to-rose-500 text-white shadow-md',
+              'Instagram': 'bg-gradient-to-r from-pink-500 to-orange-400 text-white shadow-md',
+              'Edición': 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-md',
+              'Orgánico': 'bg-gradient-to-r from-emerald-400 to-teal-500 text-white shadow-md',
+              'Administrativo': 'bg-gradient-to-r from-slate-600 to-slate-800 text-white shadow-md'
+            };
+            return styles[tag] || 'bg-slate-200 text-slate-700';
+          };
+
+          const renderSwimlane = (title, iconClass, columns) => (
+            <div className="mb-10 w-full max-w-7xl mx-auto">
+              <div className="flex items-center gap-3 mb-4 px-2">
+                <div className="p-2 bg-white/60 rounded-lg shadow-sm backdrop-blur-sm border border-white">
+                  <i className={`fa-solid ${iconClass} text-xl`}></i>
+                </div>
+                <h2 className="text-xl font-bold text-slate-800 tracking-tight">{title}</h2>
+              </div>
+              
+              <div className="flex overflow-x-auto pb-4 gap-6 items-start snap-x px-2">
+                {columns.map(column => (
+                  <div key={column.id} className={`flex-shrink-0 w-[85vw] max-w-xs sm:w-80 rounded-2xl bg-gradient-to-b ${column.color} border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] backdrop-blur-md flex flex-col snap-center overflow-hidden transition-all`} onDragOver={handleDragOver} onDrop={(e) => handleDrop(e, column.id)}>
+                    <div className={`p-4 ${column.headerColor} shadow-md`}>
+                      <div className="flex justify-between items-center mb-1">
+                        <h2 className="font-bold tracking-wide">{column.title}</h2>
+                        <span className="bg-white/20 text-white text-xs font-extrabold px-2.5 py-1 rounded-full backdrop-blur-sm">
+                          {tasks.filter(t => t.columnId === column.id).length}
+                        </span>
+                      </div>
+                      <p className="text-xs text-white/80 font-medium flex items-center gap-1.5 mt-1">
+                        <i className="fa-solid fa-user text-[10px]"></i> NODO: {column.role.toUpperCase()}
+                      </p>
+                    </div>
+
+                    <div className="p-3 flex-1 overflow-y-auto flex flex-col gap-3 min-h-[150px]">
+                      {tasks.filter(t => t.columnId === column.id).map(task => (
+                        <div key={task.id} draggable onDragStart={(e) => handleDragStart(e, task.id)} onDragEnd={handleDragEnd} className="bg-white/90 backdrop-blur-sm p-4 rounded-xl shadow-sm hover:shadow-xl border border-white cursor-grab active:cursor-grabbing hover:-translate-y-1 transition-all duration-300 group">
+                          <div className="flex justify-between items-start mb-3">
+                            <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full ${getTagStyle(task.tag)}`}>
+                              {task.tag}
+                            </span>
+                            <button className="text-slate-300 hover:text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <i className="fa-solid fa-ellipsis"></i>
+                            </button>
+                          </div>
+                          
+                          <h3 className="text-sm font-bold text-slate-800 leading-snug mb-3">{task.title}</h3>
+                          
+                          <div className="flex justify-between items-center mt-auto pt-3 border-t border-slate-100/80">
+                            <div className="flex items-center gap-2 text-xs text-slate-600 font-semibold">
+                              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 border border-indigo-200 flex items-center justify-center text-indigo-700 shadow-sm">
+                                {task.assignee.charAt(0)}
+                              </div>
+                              <span className="truncate max-w-[90px]">{task.assignee}</span>
+                            </div>
+                            <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400">
+                              <i className="fa-solid fa-calendar"></i> {task.date.slice(5)}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      
+                      {tasks.filter(t => t.columnId === column.id).length === 0 && (
+                        <div className="h-full w-full border-2 border-dashed border-slate-300/50 rounded-xl flex items-center justify-center text-slate-400 text-sm font-medium bg-white/20 backdrop-blur-sm p-4 text-center">
+                          Sinergia abierta
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+
+          return (
+            <div className="min-h-screen bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-indigo-50 via-slate-50 to-purple-100 text-slate-800 font-sans p-2 sm:p-4 md:p-8 selection:bg-indigo-200">
+              
+              <header className="mb-8 max-w-7xl mx-auto backdrop-blur-sm bg-white/40 p-4 sm:p-6 rounded-3xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+                <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+                  <div>
+                    <div className="flex items-center gap-3 mb-1">
+                      <div className="bg-indigo-600 p-2 rounded-xl shadow-lg shadow-indigo-200">
+                        <i className="fa-solid fa-bolt text-white text-xl"></i>
+                      </div>
+                      <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-indigo-900 to-purple-800 tracking-tight">
+                        Plataforma "Sinergia"
+                      </h1>
+                    </div>
+                    <p className="text-slate-500 font-medium ml-0 sm:ml-14 text-sm sm:text-base mt-2 sm:mt-0">Gestor de Neguentropía para Producción de Contenido</p>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto">
+                    <div className="flex flex-wrap sm:flex-nowrap bg-white/60 p-1 rounded-xl shadow-inner border border-white/80 w-full sm:w-auto justify-center gap-1 sm:gap-0">
+                      <button onClick={() => setView('kanban')} className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 lg:px-6 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-300 ${view === 'kanban' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
+                        <i className="fa-solid fa-table-columns"></i> Tablero
+                      </button>
+                      <button onClick={() => setView('calendar')} className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 lg:px-6 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-300 ${view === 'calendar' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
+                        <i className="fa-solid fa-calendar"></i> Calendario
+                      </button>
+                      <button onClick={() => setView('infographic')} className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 lg:px-6 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-300 ${view === 'infographic' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
+                        <i className="fa-solid fa-code-branch"></i> Infografía
+                      </button>
+                    </div>
+
+                    <button onClick={() => setIsModalOpen(true)} className="w-full sm:w-auto bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-indigo-200 hover:shadow-indigo-300 transition-all hover:-translate-y-0.5 flex items-center justify-center gap-2 text-sm sm:text-base">
+                      <i className="fa-solid fa-plus"></i> Nuevo Input
+                    </button>
+                  </div>
+                </div>
+
+                <div className={`mt-6 p-4 rounded-2xl bg-gradient-to-r ${systemStatus.color} shadow-lg flex items-center gap-4 transition-all duration-500 transform hover:scale-[1.01]`}>
+                  <div className="bg-white/20 p-2.5 rounded-full backdrop-blur-sm">
+                    <i className={`fa-solid ${systemStatus.icon} text-white text-xl`}></i>
+                  </div>
+                  <div>
+                    <p className="font-extrabold text-sm uppercase tracking-widest text-white/90 drop-shadow-sm">{systemStatus.state}</p>
+                    <p className="text-white font-medium drop-shadow-sm">{systemStatus.message}</p>
+                  </div>
+                </div>
+              </header>
+
+              {view === 'kanban' && (
+                <div className="flex flex-col animate-fade-in">
+                  {renderSwimlane("Subsistema Administrativo", "fa-briefcase text-blue-600", adminColumns)}
+                  {renderSwimlane("Subsistema Creativo & Operativo", "fa-palette text-purple-600", creativeColumns)}
+                </div>
+              )}
+
+              {view === 'calendar' && (
+                <div className="max-w-7xl mx-auto flex flex-col gap-8 pb-8 animate-fade-in">
+                  {calendarMonths.map((monthData) => (
+                    <div key={monthData.name} className="bg-white/60 backdrop-blur-xl border border-white rounded-3xl p-6 md:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.06)]">
+                      <h2 className="text-2xl font-extrabold text-indigo-900 mb-6 flex items-center gap-3">
+                        <i className="fa-solid fa-calendar text-purple-600"></i> {monthData.name}
+                      </h2>
+                      
+                      <div className="grid grid-cols-7 gap-2 md:gap-4">
+                        {daysOfWeek.map(day => (
+                          <div key={day} className="text-center font-bold text-slate-400 text-sm py-2">{day}</div>
+                        ))}
+                        
+                        {Array.from({ length: monthData.startDayIndex }).map((_, i) => (
+                          <div key={`empty-${i}`} className="min-h-[100px] rounded-2xl bg-white/20" />
+                        ))}
+
+                        {Array.from({ length: monthData.days }).map((_, i) => {
+                          const dayNum = i + 1;
+                          const dateString = `2026-${monthData.month}-${String(dayNum).padStart(2, '0')}`;
+                          const dayTasks = tasks.filter(t => t.date === dateString);
+                          
+                          return (
+                            <div key={dayNum} className={`min-h-[80px] sm:min-h-[100px] md:min-h-[120px] rounded-xl sm:rounded-2xl border ${dayTasks.length > 0 ? 'border-indigo-200 bg-indigo-50/30' : 'border-white bg-white/40'} p-1 sm:p-2 shadow-sm hover:shadow-md transition-shadow relative group`}>
+                              <span className={`absolute top-1 sm:top-2 right-1.5 sm:right-2 text-xs sm:text-sm font-bold ${dayTasks.length > 0 ? 'text-indigo-600' : 'text-slate-400'}`}>
+                                {dayNum}
+                              </span>
+                              
+                              <div className="mt-5 sm:mt-6 flex flex-col gap-1 sm:gap-1.5">
+                                {dayTasks.map(task => (
+                                  <div key={task.id} className="text-[9px] sm:text-[10px] md:text-xs font-semibold bg-white border border-indigo-100 shadow-sm text-indigo-800 px-1 sm:px-2 py-1 sm:py-1.5 rounded-md sm:rounded-lg truncate cursor-pointer hover:bg-indigo-600 hover:text-white transition-colors" title={task.title}>
+                                    {task.title}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {view === 'infographic' && (
+                <div className="max-w-7xl mx-auto flex flex-col gap-8 pb-8 animate-fade-in">
+                  <div className="bg-white/60 backdrop-blur-xl border border-white rounded-3xl p-6 md:p-10 shadow-[0_8px_30px_rgb(0,0,0,0.06)] relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-purple-200/40 rounded-full blur-3xl -z-10 translate-x-1/2 -translate-y-1/2"></div>
+                    <div className="absolute bottom-0 left-0 w-80 h-80 bg-blue-200/40 rounded-full blur-3xl -z-10 -translate-x-1/2 translate-y-1/2"></div>
+
+                    <div className="text-center mb-10 sm:mb-16 relative z-10">
+                      <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-indigo-900 mb-3 sm:mb-4 tracking-tight">Estructura y Flujo de Procesos</h2>
+                      <p className="text-indigo-700/80 font-medium max-w-2xl mx-auto text-xs sm:text-sm md:text-base px-2">Estandarización de las interacciones entre los subsistemas para reducir la entropía operativa y garantizar un ciclo de retroalimentación continuo.</p>
+                    </div>
+
+                    <div className="flex flex-col xl:flex-row items-center justify-between gap-8 xl:gap-2 relative z-10">
+                      
+                      <div className="flex-1 w-full bg-gradient-to-b from-white/80 to-blue-50/80 backdrop-blur-sm p-6 rounded-2xl border border-blue-100 shadow-xl relative group hover:-translate-y-2 transition-transform duration-300">
+                        <div className="absolute -top-5 -left-4 w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-700 text-white rounded-xl shadow-lg flex items-center justify-center font-bold text-lg">1</div>
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-blue-600 mb-2 block">Input / Entrada</span>
+                        <h3 className="text-xl font-extrabold text-slate-800 mb-2">Gestión Comercial</h3>
+                        <p className="text-sm text-slate-600 font-medium mb-6">Recepción de pautas, firma de contratos, recepción de brief y negociación.</p>
+                        <div className="bg-white p-3 rounded-xl shadow-sm border border-slate-100/50">
+                          <p className="text-xs font-bold text-slate-500 mb-1 flex items-center gap-1.5"><i className="fa-solid fa-user text-[10px]"></i> Nodo: Asistente</p>
+                          <p className="text-[10px] font-bold uppercase text-slate-400">Subsistema Admin</p>
+                        </div>
+                      </div>
+
+                      <div className="hidden xl:flex text-blue-300 transform group-hover:scale-110 transition-transform"><i className="fa-solid fa-arrow-right text-2xl"></i></div>
+                      <div className="xl:hidden text-blue-300 rotate-90 my-1"><i className="fa-solid fa-arrow-right text-xl"></i></div>
+
+                      <div className="flex-1 w-full bg-gradient-to-b from-white/80 to-purple-50/80 backdrop-blur-sm p-6 rounded-2xl border border-purple-100 shadow-xl relative group hover:-translate-y-2 transition-transform duration-300">
+                        <div className="absolute -top-5 -left-4 w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-700 text-white rounded-xl shadow-lg flex items-center justify-center font-bold text-lg">2</div>
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-purple-600 mb-2 block">Transformación</span>
+                        <h3 className="text-xl font-extrabold text-slate-800 mb-2">Preproducción</h3>
+                        <p className="text-sm text-slate-600 font-medium mb-6">Aprobación de guionaje, preparación de set, grabación de A-Roll y B-Roll.</p>
+                        <div className="bg-white p-3 rounded-xl shadow-sm border border-slate-100/50">
+                          <p className="text-xs font-bold text-slate-500 mb-1 flex items-center gap-1.5"><i className="fa-solid fa-user text-[10px]"></i> Nodo: Influencer</p>
+                          <p className="text-[10px] font-bold uppercase text-slate-400">Subsistema Creativo</p>
+                        </div>
+                      </div>
+
+                      <div className="hidden xl:flex text-purple-300"><i className="fa-solid fa-arrow-right text-2xl"></i></div>
+                      <div className="xl:hidden text-purple-300 rotate-90 my-1"><i className="fa-solid fa-arrow-right text-xl"></i></div>
+
+                      <div className="flex-1 w-full bg-gradient-to-b from-white/80 to-pink-50/80 backdrop-blur-sm p-6 rounded-2xl border border-pink-100 shadow-xl relative group hover:-translate-y-2 transition-transform duration-300">
+                        <div className="absolute -top-5 -left-4 w-10 h-10 bg-gradient-to-br from-pink-500 to-pink-700 text-white rounded-xl shadow-lg flex items-center justify-center font-bold text-lg">3</div>
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-pink-600 mb-2 block">Transformación</span>
+                        <h3 className="text-xl font-extrabold text-slate-800 mb-2">Postproducción</h3>
+                        <p className="text-sm text-slate-600 font-medium mb-6">Montaje preliminar, corrección de color, diseño sonoro y render final.</p>
+                        <div className="bg-white p-3 rounded-xl shadow-sm border border-slate-100/50">
+                          <p className="text-xs font-bold text-slate-500 mb-1 flex items-center gap-1.5"><i className="fa-solid fa-user text-[10px]"></i> Nodo: Editor</p>
+                          <p className="text-[10px] font-bold uppercase text-slate-400">Subsistema Creativo</p>
+                        </div>
+                      </div>
+
+                      <div className="hidden xl:flex text-pink-300"><i className="fa-solid fa-arrow-right text-2xl"></i></div>
+                      <div className="xl:hidden text-pink-300 rotate-90 my-1"><i className="fa-solid fa-arrow-right text-xl"></i></div>
+
+                      <div className="flex-1 w-full bg-gradient-to-b from-white/80 to-emerald-50/80 backdrop-blur-sm p-6 rounded-2xl border border-emerald-100 shadow-xl relative group hover:-translate-y-2 transition-transform duration-300">
+                        <div className="absolute -top-5 -left-4 w-10 h-10 bg-gradient-to-br from-emerald-500 to-emerald-700 text-white rounded-xl shadow-lg flex items-center justify-center font-bold text-lg">4</div>
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-600 mb-2 block">Output / Salida</span>
+                        <h3 className="text-xl font-extrabold text-slate-800 mb-2">Distribución</h3>
+                        <p className="text-sm text-slate-600 font-medium mb-6">Redacción de copies, optimización SEO, publicación y monitorización.</p>
+                        <div className="bg-white p-3 rounded-xl shadow-sm border border-slate-100/50">
+                          <p className="text-xs font-bold text-slate-500 mb-1 flex items-center gap-1.5"><i className="fa-solid fa-user text-[10px]"></i> Nodo: Comm. Manager</p>
+                          <p className="text-[10px] font-bold uppercase text-slate-400">Subsistema Creativo</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-12 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl p-6 text-white shadow-xl relative overflow-hidden group hover:shadow-2xl transition-all duration-500">
+                      <div className="absolute inset-0 bg-white/5 opacity-50 group-hover:scale-105 transition-transform duration-700"></div>
+                      <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
+                        <div className="flex items-center gap-4">
+                          <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm shadow-inner flex items-center justify-center">
+                            <i className="fa-solid fa-arrows-rotate text-2xl animate-[spin_4s_linear_infinite]"></i>
+                          </div>
+                          <div>
+                            <h4 className="text-lg font-extrabold mb-1 tracking-wide">Mecanismo de Retroalimentación</h4>
+                            <p className="text-indigo-100 text-sm font-medium">Análisis de métricas y cierre de ciclo.</p>
+                          </div>
+                        </div>
+                        <div className="bg-white/10 p-4 rounded-xl border border-white/20 text-sm font-medium max-w-md shadow-sm backdrop-blur-sm">
+                          Los reportes de resultados de la distribución regresan al <span className="font-bold text-white uppercase tracking-wider text-[10px] bg-indigo-800/50 px-1.5 py-0.5 rounded ml-1">Subsistema Admin</span> para facturar y generar nuevas propuestas (Neguentropía).
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+              )}
+
+              {isModalOpen && (
+                <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md flex items-center justify-center z-50 p-4">
+                  <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-white animate-fade-in">
+                    <div className="p-6 bg-gradient-to-r from-indigo-50 to-purple-50 border-b border-indigo-100">
+                      <h3 className="font-extrabold text-xl text-indigo-900 mb-1">Nuevo Input al Sistema</h3>
+                      <p className="text-sm text-indigo-600/80 font-medium">Define las variables de esta nueva interdependencia.</p>
+                    </div>
+                    <form onSubmit={handleAddTask} className="p-4 sm:p-6 flex flex-col gap-4 sm:gap-5">
+                      <div>
+                        <label className="block text-sm font-bold text-slate-700 mb-1.5">Nombre del Proyecto</label>
+                        <input type="text" autoFocus required value={newTask.title} onChange={(e) => setNewTask({...newTask, title: e.target.value})} className="w-full border-2 border-slate-200 rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 text-sm focus:ring-0 focus:border-indigo-500 outline-none transition-colors bg-slate-50 focus:bg-white" placeholder="Ej. Reel sobre Hábitos Saludables" />
+                      </div>
+                      
+                      <div className="flex flex-col sm:flex-row gap-4">
+                        <div className="flex-1">
+                          <label className="block text-sm font-bold text-slate-700 mb-1.5">Subsistema de Ingreso</label>
+                          <select value={newTask.subsystem} onChange={(e) => setNewTask({...newTask, subsystem: e.target.value})} className="w-full border-2 border-slate-200 rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 text-sm focus:ring-0 focus:border-indigo-500 outline-none bg-slate-50 focus:bg-white font-medium">
+                            <option value="creativo">🎨 Flujo Creativo (Ideas)</option>
+                            <option value="administrativo">💼 Flujo Admin (Comercial)</option>
+                          </select>
+                        </div>
+                        <div className="flex-1">
+                          <label className="block text-sm font-bold text-slate-700 mb-1.5">Nodo Responsable</label>
+                          <select value={newTask.assignee} onChange={(e) => setNewTask({...newTask, assignee: e.target.value})} className="w-full border-2 border-slate-200 rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 text-sm focus:ring-0 focus:border-indigo-500 outline-none bg-slate-50 focus:bg-white font-medium">
+                            <option>Influencer</option>
+                            <option>Asistente Admin</option>
+                            <option>Editor de Video</option>
+                            <option>Community Manager</option>
+                            <option>Todos</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col sm:flex-row gap-4">
+                        <div className="flex-1">
+                          <label className="block text-sm font-bold text-slate-700 mb-1.5">Categoría (Tag)</label>
+                          <select value={newTask.tag} onChange={(e) => setNewTask({...newTask, tag: e.target.value})} className="w-full border-2 border-slate-200 rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 text-sm focus:ring-0 focus:border-indigo-500 outline-none bg-slate-50 focus:bg-white font-medium">
+                            <option>Orgánico</option>
+                            <option>Patrocinado</option>
+                            <option>YouTube</option>
+                            <option>Instagram</option>
+                            <option>Edición</option>
+                            <option>Administrativo</option>
+                          </select>
+                        </div>
+                        <div className="flex-1">
+                          <label className="block text-sm font-bold text-slate-700 mb-1.5">Fecha (Feb - Mar 2026)</label>
+                          <input type="date" required min="2026-02-01" max="2026-03-31" value={newTask.date} onChange={(e) => setNewTask({...newTask, date: e.target.value})} className="w-full border-2 border-slate-200 rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 text-sm focus:ring-0 focus:border-indigo-500 outline-none bg-slate-50 focus:bg-white font-medium text-slate-700" />
+                        </div>
+                      </div>
+
+                      <div className="flex justify-end gap-3 mt-2 sm:mt-4 pt-4 border-t border-slate-100">
+                        <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-2.5 text-sm font-bold text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-colors">Cancelar</button>
+                        <button type="submit" className="px-5 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 rounded-xl transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5">Inyectar al Sistema</button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              )}
+
+            </div>
+          );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
