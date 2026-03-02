@@ -54,12 +54,12 @@
         ];
 
         const initialTasks = [
-          { id: 't1', title: 'Propuesta Marca Skincare', columnId: 'col-a1', assignee: 'Asistente Admin', tag: 'Patrocinado', priority: 'Alta', date: '2026-02-14' },
-          { id: 't2', title: 'Contrato Ropa Deportiva', columnId: 'col-a2', assignee: 'Asistente Admin', tag: 'Administrativo', priority: 'Alta', date: '2026-02-18' },
-          { id: 't3', title: 'Cobro Campaña Enero', columnId: 'col-a3', assignee: 'Asistente Admin', tag: 'Administrativo', priority: 'Media', date: '2026-02-28' },
+          { id: 't1', title: 'Propuesta Marca Skincare', columnId: 'col-a1', assignee: 'Asistente', tag: 'Patrocinado', priority: 'Alta', date: '2026-02-14' },
+          { id: 't2', title: 'Contrato Ropa Deportiva', columnId: 'col-a2', assignee: 'Asistente', tag: 'Administrativo', priority: 'Alta', date: '2026-02-18' },
+          { id: 't3', title: 'Cobro Campaña Enero', columnId: 'col-a3', assignee: 'Asistente', tag: 'Administrativo', priority: 'Media', date: '2026-02-28' },
           { id: 't4', title: 'Trend de TikTok (Audio Viral)', columnId: 'col-c1', assignee: 'Todos', tag: 'Orgánico', priority: 'Baja', date: '2026-02-10' },
           { id: 't5', title: 'Rutina de Mañana VLOG', columnId: 'col-c2', assignee: 'Influencer', tag: 'YouTube', priority: 'Media', date: '2026-02-20' },
-          { id: 't6', title: 'Reels Q&A Nutrición', columnId: 'col-c3', assignee: 'Editor de Video', tag: 'Edición', priority: 'Alta', date: '2026-02-25' },
+          { id: 't6', title: 'Reels Q&A Nutrición', columnId: 'col-c3', assignee: 'Editor', tag: 'Edición', priority: 'Alta', date: '2026-02-25' },
           { id: 't7', title: 'Post Carrusel Tips Bienestar', columnId: 'col-c4', assignee: 'Community Manager', tag: 'Instagram', priority: 'Media', date: '2026-03-12' },
         ];
 
@@ -74,6 +74,7 @@
           const [view, setView] = useState('kanban'); 
           const [systemStatus, setSystemStatus] = useState({ state: 'Equilibrio', message: 'El sistema fluye correctamente.', color: 'from-emerald-400 to-teal-500 text-white shadow-emerald-200', icon: 'fa-circle-check' });
           const [isModalOpen, setIsModalOpen] = useState(false);
+          const [editingTask, setEditingTask] = useState(null); // Estado para la tarjeta en edición
           
           const [newTask, setNewTask] = useState({ 
             title: '', assignee: 'Influencer', tag: 'Orgánico', date: '2026-02-15', subsystem: 'creativo'
@@ -113,7 +114,18 @@
           const handleDrop = (e, columnId) => {
             e.preventDefault();
             const taskId = e.dataTransfer.getData('taskId');
-            setTasks(prevTasks => prevTasks.map(task => task.id === taskId ? { ...task, columnId } : task));
+            
+            // Buscar la columna destino para obtener su rol por defecto
+            const allColumns = [...adminColumns, ...creativeColumns];
+            const targetColumn = allColumns.find(c => c.id === columnId);
+
+            setTasks(prevTasks => prevTasks.map(task => {
+              if (task.id === taskId) {
+                // Actualiza la columna y auto-asigna al responsable de esa fase
+                return { ...task, columnId: columnId, assignee: targetColumn.role };
+              }
+              return task;
+            }));
           };
 
           // --- CREAR NUEVA TAREA ---
@@ -128,6 +140,13 @@
             setTasks([...tasks, task]);
             setIsModalOpen(false);
             setNewTask({ title: '', assignee: 'Influencer', tag: 'Orgánico', date: '2026-02-15', subsystem: 'creativo' });
+          };
+
+          // --- ACTUALIZAR TAREA EXISTENTE (EDICIÓN) ---
+          const handleUpdateTask = (e) => {
+            e.preventDefault();
+            setTasks(prevTasks => prevTasks.map(t => t.id === editingTask.id ? editingTask : t));
+            setEditingTask(null); // Cerrar modal de edición
           };
 
           const getTagStyle = (tag) => {
@@ -168,24 +187,25 @@
 
                     <div className="p-3 flex-1 overflow-y-auto flex flex-col gap-3 min-h-[150px]">
                       {tasks.filter(t => t.columnId === column.id).map(task => (
-                        <div key={task.id} draggable onDragStart={(e) => handleDragStart(e, task.id)} onDragEnd={handleDragEnd} className="bg-white/90 backdrop-blur-sm p-4 rounded-xl shadow-sm hover:shadow-xl border border-white cursor-grab active:cursor-grabbing hover:-translate-y-1 transition-all duration-300 group">
+                        <div key={task.id} draggable onDragStart={(e) => handleDragStart(e, task.id)} onDragEnd={handleDragEnd} className="bg-white/90 backdrop-blur-sm p-4 rounded-xl shadow-sm hover:shadow-xl border border-white cursor-grab active:cursor-grabbing hover:-translate-y-1 transition-all duration-300 group relative">
                           <div className="flex justify-between items-start mb-3">
                             <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full ${getTagStyle(task.tag)}`}>
                               {task.tag}
                             </span>
-                            <button className="text-slate-300 hover:text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <i className="fa-solid fa-ellipsis"></i>
+                            {/* Botón de Edición modificado */}
+                            <button onClick={() => setEditingTask(task)} className="text-slate-400 hover:text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity bg-white/80 rounded-full p-1 shadow-sm border border-slate-100">
+                              <i className="fa-solid fa-pen text-xs px-1"></i>
                             </button>
                           </div>
                           
                           <h3 className="text-sm font-bold text-slate-800 leading-snug mb-3">{task.title}</h3>
                           
                           <div className="flex justify-between items-center mt-auto pt-3 border-t border-slate-100/80">
-                            <div className="flex items-center gap-2 text-xs text-slate-600 font-semibold">
-                              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 border border-indigo-200 flex items-center justify-center text-indigo-700 shadow-sm">
+                            <div className="flex items-center gap-2 text-xs text-slate-600 font-semibold bg-slate-100/50 px-2 py-1 rounded-lg border border-slate-200/50">
+                              <div className="w-5 h-5 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 border border-indigo-200 flex items-center justify-center text-indigo-700 shadow-sm text-[10px]">
                                 {task.assignee.charAt(0)}
                               </div>
-                              <span className="truncate max-w-[90px]">{task.assignee}</span>
+                              <span className="truncate max-w-[80px]">{task.assignee}</span>
                             </div>
                             <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400">
                               <i className="fa-solid fa-calendar"></i> {task.date.slice(5)}
@@ -290,7 +310,7 @@
                               
                               <div className="mt-5 sm:mt-6 flex flex-col gap-1 sm:gap-1.5">
                                 {dayTasks.map(task => (
-                                  <div key={task.id} className="text-[9px] sm:text-[10px] md:text-xs font-semibold bg-white border border-indigo-100 shadow-sm text-indigo-800 px-1 sm:px-2 py-1 sm:py-1.5 rounded-md sm:rounded-lg truncate cursor-pointer hover:bg-indigo-600 hover:text-white transition-colors" title={task.title}>
+                                  <div key={task.id} className="text-[9px] sm:text-[10px] md:text-xs font-semibold bg-white border border-indigo-100 shadow-sm text-indigo-800 px-1 sm:px-2 py-1 sm:py-1.5 rounded-md sm:rounded-lg truncate cursor-pointer hover:bg-indigo-600 hover:text-white transition-colors" title={task.title} onClick={() => setEditingTask(task)}>
                                     {task.title}
                                   </div>
                                 ))}
@@ -393,6 +413,7 @@
                 </div>
               )}
 
+              {/* MODAL CREAR TAREA */}
               {isModalOpen && (
                 <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md flex items-center justify-center z-50 p-4">
                   <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-white animate-fade-in">
@@ -418,8 +439,8 @@
                           <label className="block text-sm font-bold text-slate-700 mb-1.5">Nodo Responsable</label>
                           <select value={newTask.assignee} onChange={(e) => setNewTask({...newTask, assignee: e.target.value})} className="w-full border-2 border-slate-200 rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 text-sm focus:ring-0 focus:border-indigo-500 outline-none bg-slate-50 focus:bg-white font-medium">
                             <option>Influencer</option>
-                            <option>Asistente Admin</option>
-                            <option>Editor de Video</option>
+                            <option>Asistente</option>
+                            <option>Editor</option>
                             <option>Community Manager</option>
                             <option>Todos</option>
                           </select>
@@ -447,6 +468,58 @@
                       <div className="flex justify-end gap-3 mt-2 sm:mt-4 pt-4 border-t border-slate-100">
                         <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-2.5 text-sm font-bold text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-colors">Cancelar</button>
                         <button type="submit" className="px-5 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 rounded-xl transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5">Inyectar al Sistema</button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              )}
+
+              {/* MODAL EDITAR TAREA */}
+              {editingTask && (
+                <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md flex items-center justify-center z-50 p-4">
+                  <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-white animate-fade-in">
+                    <div className="p-6 bg-gradient-to-r from-orange-50 to-amber-50 border-b border-amber-100 flex justify-between items-center">
+                      <div>
+                        <h3 className="font-extrabold text-xl text-amber-900 mb-1">Actualizar Input</h3>
+                        <p className="text-sm text-amber-700/80 font-medium">Modifica los parámetros de este elemento.</p>
+                      </div>
+                      <div className="bg-amber-100 text-amber-600 p-2 rounded-full">
+                        <i className="fa-solid fa-pen"></i>
+                      </div>
+                    </div>
+                    <form onSubmit={handleUpdateTask} className="p-4 sm:p-6 flex flex-col gap-4 sm:gap-5">
+                      <div>
+                        <label className="block text-sm font-bold text-slate-700 mb-1.5">Nombre del Proyecto</label>
+                        <input type="text" required value={editingTask.title} onChange={(e) => setEditingTask({...editingTask, title: e.target.value})} className="w-full border-2 border-slate-200 rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 text-sm focus:ring-0 focus:border-amber-500 outline-none transition-colors bg-slate-50 focus:bg-white" />
+                      </div>
+                      
+                      <div className="flex flex-col sm:flex-row gap-4">
+                        <div className="flex-1">
+                          <label className="block text-sm font-bold text-slate-700 mb-1.5">Nodo Responsable</label>
+                          <select value={editingTask.assignee} onChange={(e) => setEditingTask({...editingTask, assignee: e.target.value})} className="w-full border-2 border-slate-200 rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 text-sm focus:ring-0 focus:border-amber-500 outline-none bg-slate-50 focus:bg-white font-medium">
+                            <option>Influencer</option>
+                            <option>Asistente</option>
+                            <option>Editor</option>
+                            <option>Community Manager</option>
+                            <option>Todos</option>
+                          </select>
+                        </div>
+                        <div className="flex-1">
+                          <label className="block text-sm font-bold text-slate-700 mb-1.5">Categoría (Tag)</label>
+                          <select value={editingTask.tag} onChange={(e) => setEditingTask({...editingTask, tag: e.target.value})} className="w-full border-2 border-slate-200 rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 text-sm focus:ring-0 focus:border-amber-500 outline-none bg-slate-50 focus:bg-white font-medium">
+                            <option>Orgánico</option>
+                            <option>Patrocinado</option>
+                            <option>YouTube</option>
+                            <option>Instagram</option>
+                            <option>Edición</option>
+                            <option>Administrativo</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="flex justify-end gap-3 mt-2 sm:mt-4 pt-4 border-t border-slate-100">
+                        <button type="button" onClick={() => setEditingTask(null)} className="px-5 py-2.5 text-sm font-bold text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-colors">Cancelar</button>
+                        <button type="submit" className="px-5 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 rounded-xl transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5">Guardar Cambios</button>
                       </div>
                     </form>
                   </div>
